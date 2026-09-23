@@ -1,0 +1,9 @@
+openai
+python-dotenv
+pypdf
+pymupdf
+pytesseract
+pillow
+faiss-cpu
+numpy
+streamlit
