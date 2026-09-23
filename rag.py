@@ -1,7 +1,8 @@
 import os
 import pickle
 from typing import List, Dict, Tuple
-
+import json
+import time
 import faiss
 import numpy as np
 import fitz
@@ -22,6 +23,7 @@ DOCUMENTS_FOLDER = "documents"
 VECTOR_STORE_FOLDER = "vector_store"
 INDEX_PATH = os.path.join(VECTOR_STORE_FOLDER, "index.faiss")
 CHUNKS_PATH = os.path.join(VECTOR_STORE_FOLDER, "chunks.pkl")
+MANIFEST_PATH = os.path.join(VECTOR_STORE_FOLDER, "manifest.json")
 
 CHUNK_SIZE = 1200
 CHUNK_OVERLAP = 200
