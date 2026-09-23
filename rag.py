@@ -36,29 +36,46 @@ if not OPENAI_ENDPOINT:
 
 client = OpenAI(api_key=API_KEY, base_url=OPENAI_ENDPOINT)
 
-
 def extract_pdf_pages(pdf_path: str, filename: str) -> List[Dict]:
-    """Extract normal PDF text; fall back to OCR for scanned pages."""
+    """Extract normal PDF text and fall back to OCR for scanned pages."""
     document = fitz.open(pdf_path)
     pages = []
 
-    for page_number in range(len(document)):
-        page = document[page_number]
-        text = " ".join((page.get_text("text") or "").split())
+    try:
+        for page_number in range(len(document)):
+            page = document[page_number]
+            text = " ".join((page.get_text("text") or "").split())
 
-        if not text:
-            pixmap = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
-            image = Image.open(BytesIO(pixmap.tobytes("png")))
-            text = " ".join(pytesseract.image_to_string(image).split())
+            if not text:
+                pixmap = page.get_pixmap(
+                    matrix=fitz.Matrix(2, 2),
+                    alpha=False
+                )
+                image = Image.open(
+                    BytesIO(pixmap.tobytes("png"))
+                )
 
-        if text:
-            pages.append({
-                "source": filename,
-                "page": page_number + 1,
-                "text": text,
-            })
+                try:
+                    text = " ".join(
+                        pytesseract.image_to_string(image).split()
+                    )
+                except pytesseract.TesseractNotFoundError as exc:
+                    raise RuntimeError(
+                        "OCR is required for a scanned PDF, but Tesseract "
+                        "is not installed. Install it with `brew install "
+                        "tesseract` on macOS."
+                    ) from exc
 
-    document.close()
+            if text:
+                pages.append({
+                    "source": filename,
+                    "page": page_number + 1,
+                    "text": text,
+                })
+
+    finally:
+        document.close()
+
     return pages
 
 
