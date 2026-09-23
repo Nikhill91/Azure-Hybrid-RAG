@@ -227,12 +227,15 @@ def generate_answer(question: str, mode: str = "Hybrid") -> Dict:
     """
 
     if mode == "General Knowledge":
-        system_prompt = """
-You are a helpful general-purpose AI assistant.
-Answer the user's question using your general knowledge.
-Do not claim that any information came from uploaded documents.
-If a fact may be time-sensitive and you cannot verify it, state that limitation.
-"""
+        system_prompt = (
+    "You are a helpful general-purpose AI assistant. "
+    "Answer using your general knowledge and reasoning. "
+    "Do not claim or imply that information came from uploaded documents. "
+    "Do not invent sources or citations. "
+    "If the question depends on current or time-sensitive information that you "
+    "cannot verify, clearly state that limitation. "
+    "If you are uncertain about a fact, say so rather than presenting a guess as certain."
+)
         response = client.chat.completions.create(
             model=LLM_MODEL,
             messages=[
@@ -261,21 +264,18 @@ If a fact may be time-sensitive and you cannot verify it, state that limitation.
 
         context = create_context(results)
 
-        system_prompt = """
-You are a strict document-grounded RAG assistant.
-
-Use ONLY the supplied document context.
-Do not use outside knowledge.
-Do not guess or invent facts.
-
-If the answer is not supported by the context, say:
-"I could not find enough relevant information in the uploaded documents."
-
-For document-supported claims, cite:
-[filename.pdf, Page X]
-
-Never invent citations.
-"""
+        system_prompt = (
+    "You are a strict document-grounded RAG assistant. "
+    "Use ONLY the supplied document context to answer the question. "
+    "Do not use outside knowledge to fill missing information. "
+    "Do not guess, infer unsupported facts, or invent citations. "
+    "Every factual claim based on the documents must be supported by the "
+    "provided context. "
+    "Cite supporting information using [filename.pdf, Page X]. "
+    "If the documents do not contain enough information, respond exactly with "
+    "\"I could not find enough relevant information in the uploaded documents.\" "
+    "Do not force an answer when the evidence is insufficient."
+)
 
         user_prompt = f"""
 DOCUMENT CONTEXT:
@@ -305,32 +305,19 @@ Answer using only the document context and include citations.
     if results:
         context = create_context(results)
 
-        system_prompt = """
-You are a Hybrid RAG AI Assistant.
-
-You have two knowledge sources:
-1. User-provided documents.
-2. Your general knowledge.
-
-Use relevant uploaded-document information as the primary source
-when it directly answers the question.
-
-You MAY use general knowledge when:
-- the documents do not contain the answer,
-- the user asks for broader background,
-- the user asks for a comparison or explanation beyond the documents.
-
-Never pretend general knowledge came from the uploaded documents.
-
-For claims supported by documents, cite:
-[filename.pdf, Page X]
-
-If the answer combines document information and general knowledge,
-make the distinction clear.
-
-Never invent document citations.
-Do not force irrelevant retrieved text into the answer.
-"""
+        system_prompt = (
+    "You are a Hybrid RAG AI Assistant. "
+    "Use relevant uploaded documents as the primary source whenever they contain "
+    "information relevant to the question. "
+    "You may use general knowledge when the retrieved documents are insufficient, "
+    "but clearly distinguish general knowledge from information supported by the "
+    "uploaded documents. "
+    "Never invent document citations. "
+    "Only cite a document when the supplied context actually supports the claim. "
+    "Do not force irrelevant retrieved context into the answer. "
+    "If the available evidence is insufficient, clearly state the limitation "
+    "instead of presenting an unsupported claim as fact."
+)
         user_prompt = f"""
 RETRIEVED DOCUMENT CONTEXT:
 {context}
